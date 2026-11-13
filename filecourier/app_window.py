@@ -13,6 +13,16 @@ from PyQt6.QtCore import Qt, QThreadPool
 
 from transfer_task import TaskSignals, TransferTask, AtomicCounter
 
+
+def resource_path(relative_path):
+    """获取资源文件的绝对路径，兼容源码运行与 PyInstaller 打包后的场景。"""
+    if getattr(sys, 'frozen', False):
+        base_path = os.path.dirname(sys.executable)
+    else:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_path, relative_path)
+
+
 class FileCourierApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -22,7 +32,7 @@ class FileCourierApp(QWidget):
         self.thread_pool = QThreadPool()
         self.cancellation_flag = None
         self.active_tasks_counter = None
-        self.log_file_path = self.config.get('common', 'log_file', fallback='file_courier.log')
+        self.log_file_path = resource_path(self.config.get('common', 'log_file', fallback='file_courier.log'))
 
         # 2. 创建 UI 界面
         self.init_ui()
@@ -155,14 +165,14 @@ class FileCourierApp(QWidget):
 
     def load_config(self):
         try:
-            self.config.read('config.ini')
+            self.config.read(resource_path('config.ini'), encoding='utf-8')
             self.log("配置文件 config.ini 加载成功。")
         except Exception as e:
             self.log(f"错误: 加载 config.ini 失败: {e}")
 
     def load_ips(self):
         try:
-            with open('ip_list.txt', 'r') as f:
+            with open(resource_path('ip_list.txt'), 'r', encoding='utf-8') as f:
                 ips = [line.strip() for line in f if line.strip()]
                 for ip in ips:
                     item = QListWidgetItem()
